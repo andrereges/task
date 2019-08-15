@@ -4,6 +4,7 @@
 
 <pre>
 vue init webpack task
+npm install
 npm run dev
 npm install sass-loader node-sass --save
 </pre>

@@ -5,31 +5,19 @@
         
         <transition-group name="fade" enter-active-class="animated fadeInUp" leave-active-class="animated fadeOutDown">
             <task-item v-for="(task, index) in tasksFiltered" :key="task.id" 
-                :task="task" :index="index" :checkAll="!anyRemaining"
-                @removedTask="removeTask" @finishedEdit="finishedEdit"></task-item>
+                :task="task" :index="index" :checkAll="!anyRemaining"></task-item>
         </transition-group>
 
         <div class="extra-container">
-            <div>
-                <label>
-                    <input type="checkbox" :checked="!anyRemaining" @change="checkAllTasks">Check All
-                </label>
-            </div>
-            <div>{{ remaining }} items left</div>
+            <task-check-all :anyRemaining="anyRemaining"></task-check-all>
+            <task-items-remaining :remaining="remaining"></task-items-remaining>
         </div>
 
         <div class="extra-container">
-            <div>
-                <button :class="{ active: filter == 'all' }" @click="filter = 'all'">All</button>
-                <button :class="{ active: filter == 'active' }" @click="filter = 'active'">Active</button>
-                <button :class="{ active: filter == 'completed' }" @click="filter = 'completed'">Completed</button>
-            </div>
-
+            <task-filtered></task-filtered>
             <div>
                 <transition name="fade">
-                    <button v-if="showClearCompletedButton" @click="clearCompleted">
-                        Clear Completed
-                    </button>
+                    <task-clear-completed :showClearCompletedButton="showClearCompletedButton"></task-clear-completed>
                 </transition>
             </div>
         </div>
@@ -38,11 +26,19 @@
 
 <script>
 import TaskItem from './TaskItem'
+import TaskItemsRemaining from './TaskItemsRemaining'
+import TaskCheckAll from './TaskCheckAll'
+import TaskFiltered from './TaskFiltered'
+import TaskClearCompleted from './TaskClearCompleted'
 
 export default {
     name: 'task-list',
     components: {
         TaskItem,
+        TaskItemsRemaining,
+        TaskCheckAll,
+        TaskFiltered,
+        TaskClearCompleted,
     },
     data () {
         return {
@@ -65,6 +61,20 @@ export default {
             }
         ]
         }
+    },
+    created() {
+        eventBus.$on('removedTask', (index) => this.removeTask(index))
+        eventBus.$on('finishedEdit', (data) => this.finishedEdit(data))
+        eventBus.$on('checkAllChanged', (checked) => this.checkAllTasks(checked))
+        eventBus.$on('filterChanged', (filter) => this.filter = filter)
+        eventBus.$on('clearCompletedTasks', () => this.clearCompleted())
+    },
+    beforeDestroy() {
+        eventBus.$off('removedTask', (index) => this.removeTask(index))
+        eventBus.$off('finishedEdit', (data) => this.finishedEdit(data))
+        eventBus.$off('checkAllChanged', (checked) => this.checkAllTasks(checked))
+        eventBus.$off('filterChanged', (filter) => this.filter = filter)
+        eventBus.$off('clearCompletedTasks', () => this.clearCompleted())
     },
     computed: {
         remaining() {
